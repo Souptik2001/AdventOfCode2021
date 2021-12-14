@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if test -r $1
+then
+  clang++-7 -pthread -std=c++17 -o main $1 && ./main
+else
+  echo "Either this file does'nt exists or read permission is not granted for this file"
+fi
