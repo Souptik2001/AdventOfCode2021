@@ -29,10 +29,14 @@ void print_board(vector<unordered_map<int, int>> boards, int index){
 }
 
 
-int solve(vector<int> moves, vector<unordered_map<int, int>> b1, vector<vector<int>> b2){
+int solve(vector<int> moves, vector<unordered_map<int, int>> b1, vector<vector<int>> b2, vector<bool> board_won){
+  if(moves.size()==0) return 0;
+  int last_num = moves[0];
+  int num_boards = board_won.size();
   for(int i=0; i<moves.size(); i++){
+    last_num = moves[i];
     for(int j=0; j<b1.size(); j++){
-      if( b1[j].find(moves[i]) != b1[j].end() && b1[j][moves[i]] != -1 ){
+      if( board_won[j]==false && b1[j].find(moves[i]) != b1[j].end() && b1[j][moves[i]] != -1 ){
         int index = b1[j][moves[i]];
         b1[j][moves[i]] = -1;
         int col = index % 5;
@@ -41,19 +45,28 @@ int solve(vector<int> moves, vector<unordered_map<int, int>> b1, vector<vector<i
         b2[j][row+5] -=1;
         if(b2[j][col]==0 || b2[j][row+5]==0){
           // This board wins
-          int unmarked_sum = 0;
-          cout << j << "th board wins" << endl;
-          for(auto it=b1[j].begin(); it!=b1[j].end(); ++it){
-            if(it->second!=-1){
-              unmarked_sum += it->first;
-            }
-          }
-          return unmarked_sum * moves[i];
+          num_boards--;
+          if(num_boards<=0) break;
+          board_won[j] = true;
         }
       }
     }
+    if(num_boards<=0) break;
   }
-  return 0; // No one wins
+  cout << num_boards << endl;
+  for(int i=0; i<board_won.size(); i++){
+    if(board_won[i]==false){
+      // This is the last one
+      cout << i+1 << " number board is the last one to win when " << last_num << " is called" << endl;
+      int unmarked_sum = 0;
+      for(auto it=b1[i].begin(); it!=b1[i].end(); ++it){
+        if(it->second==-1) continue;
+        unmarked_sum += it->first;
+      }
+      return unmarked_sum * last_num;
+    }
+  }
+  return 0; // All won - Unreachable condition
 }
 
 
@@ -62,6 +75,7 @@ int main() {
   string inp_line;
   vector<int> moves;
   // Board
+  vector<bool> board_won;
   vector<unordered_map<int, int>> board1;
   vector<vector<int>> board2;
   unordered_map<int, int> temp_unit;
@@ -77,6 +91,7 @@ int main() {
         board_index = 0;
         board1.push_back(temp_unit);
         board2.push_back(temp_count);
+        board_won.push_back(false);
         temp_unit.clear();
         temp_count.clear();
       }
@@ -99,10 +114,11 @@ int main() {
   if(temp_unit.size()>0){
     board1.push_back(temp_unit);
     board2.push_back(temp_count);
+    board_won.push_back(false);
     temp_unit.clear();
     temp_count.clear();
   }
-  cout << solve(moves, board1, board2) << endl;
+  cout << solve(moves, board1, board2, board_won) << endl;
   auto end = chrono::high_resolution_clock::now();
   auto duration = chrono::duration_cast<chrono::microseconds>(end-start);
   cout << "Time taken by the program : " << duration.count() << " microseconds." << endl;
